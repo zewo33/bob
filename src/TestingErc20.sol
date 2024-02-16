@@ -13,7 +13,7 @@ contract TestingErc20 is ERC20, ERC20Burnable, Ownable, ERC2771Recipient {
 
     constructor(string memory _name, string memory _symbol, uint8 _decimals) ERC20(_name, _symbol) {
         _numDecimals = _decimals;
-        mint(10000000000);
+        mint(100000 * _decimals);
     }
 
     function setTrustedForwarder(address _forwarder) public onlyOwner {
