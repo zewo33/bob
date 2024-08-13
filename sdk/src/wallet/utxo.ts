@@ -1,4 +1,4 @@
-import { Transaction, Script, selectUTXO, TEST_NETWORK, NETWORK, p2wpkh, p2sh } from '@scure/btc-signer';
+import { Transaction, Script, selectUTXO, TEST_NETWORK, NETWORK, p2wpkh, p2sh } from '@scure/btc-signer'; // Reference
 import { hex } from "@scure/base";
 import { AddressType } from 'bitcoin-address-validation';
 

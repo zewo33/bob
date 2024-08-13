@@ -2,7 +2,7 @@
 /**
  * @ignore
  */
-import { Transaction } from "bitcoinjs-lib";
+import { Transaction } from '@scure/btc-signer';
 //@ts-nocheck
 /**
  * @ignore
@@ -59,13 +59,13 @@ export async function getBitcoinTxInfo(
     forWitness?: boolean,
 ): Promise<BitcoinTxInfo> {
     const txHex = await esploraClient.getTransactionHex(txId);
-    const tx = Transaction.fromHex(txHex);
+    const tx = Transaction.fromRaw(Buffer.from(txHex, 'hex'), { allowUnknownOutputs: true });
 
     const versionBuffer = Buffer.allocUnsafe(4);
     versionBuffer.writeInt32LE(tx.version);
 
     const locktimeBuffer = Buffer.allocUnsafe(4);
-    locktimeBuffer.writeInt32LE(tx.locktime);
+    locktimeBuffer.writeInt32LE(tx.lockTime);
 
     return {
         version: versionBuffer.toString("hex"),

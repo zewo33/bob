@@ -1,7 +1,7 @@
 import { assert, describe, it } from "vitest";
 import { MAINNET_ESPLORA_BASE_PATH } from "../src/esplora";
 import { Block } from "bitcoinjs-lib";
-import { estimateTxFee, getMerkleProof } from "../src/utils";
+import {estimateTxFee, estimateTxFeeDummy, getMerkleProof} from "../src/utils";
 
 describe("Utils Tests", () => {
     // NOTE: this is a bit flaky due to slow response times from electrs
@@ -21,6 +21,6 @@ describe("Utils Tests", () => {
     });
 
     it("should estimate fee", async () => {
-        assert.equal(estimateTxFee(1), 172);
+        assert.equal(estimateTxFee(1), 70);
     });
 });

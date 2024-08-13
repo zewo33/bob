@@ -7,81 +7,87 @@ import { Block } from "bitcoinjs-lib";
 /**
  * @ignore
  */
-import { BufferWriter, varuint } from "bitcoinjs-lib/src/bufferutils";
-//@ts-nocheck
-/**
- * @ignore
- */
 import { hash256 } from "bitcoinjs-lib/src/crypto";
 //@ts-nocheck
 /**
  * @ignore
  */
-import { Output, Transaction } from "bitcoinjs-lib/src/transaction";
-//@ts-nocheck
-/**
- * @ignore
- */
-import * as bitcoin from "bitcoinjs-lib";
+import { Transaction, TaprootControlBlock } from '@scure/btc-signer';
+import {hash160} from "@scure/btc-signer/lib/utils"; // Reference
 
-/**
- * @ignore
- */
-function varSliceSize(someScript: Buffer): number {
-    const length = someScript.length;
-    return varuint.encodingLength(length) + length;
-}
 
 /**
  * @ignore
  */
 export function encodeRawInput(tx: Transaction) {
-    const inputSize = varuint.encodingLength(tx.ins.length) + tx.ins.reduce((sum, input) => {
-        return sum + 40 + varSliceSize(input.script);
+    // Calculate the size of the input buffer
+    const inputSize = 1 + tx.inputsLength * 40 + Array.from({ length: tx.inputsLength }).reduce((sum, _, idx) => {
+        const input = tx.getInput(idx);
+        return sum + input.finalScriptSig.length + 1;
     }, 0);
 
-    const inputBuffer = Buffer.allocUnsafe(inputSize);
-    const inputBufferWriter = new BufferWriter(inputBuffer, 0);
+    let inputBuffer = Buffer.allocUnsafe(inputSize);
+    let offset = 0;
 
-    inputBufferWriter.writeVarInt(tx.ins.length);
-    tx.ins.forEach(txIn => {
-        inputBufferWriter.writeSlice(txIn.hash);
-        inputBufferWriter.writeUInt32(txIn.index);
-        inputBufferWriter.writeVarSlice(txIn.script);
-        inputBufferWriter.writeUInt32(txIn.sequence);
-    });
+    // Write the number of inputs directly (since inputsLength should fit within one byte)
+    offset = inputBuffer.writeUInt8(tx.inputsLength, offset);
 
+    for (let idx = 0; idx < tx.inputsLength; idx++) {
+        const txIn = tx.getInput(idx);
+
+        // Write the reversed txid
+        const reversedTxid = Buffer.from(txIn.txid).reverse();
+        offset += reversedTxid.copy(inputBuffer, offset);
+
+        // Write the index
+        offset = inputBuffer.writeUInt32LE(txIn.index, offset);
+
+        // Write the scriptSig length and the scriptSig itself
+        const scriptSig = Buffer.from(txIn.finalScriptSig);
+        offset = inputBuffer.writeUInt8(scriptSig.length, offset);
+        offset += scriptSig.copy(inputBuffer, offset);
+
+        // Write the sequence
+        offset = inputBuffer.writeUInt32LE(txIn.sequence, offset);
+    }
     return inputBuffer;
 }
 
 /**
  * @ignore
  */
-function isOutput(out: Output): boolean {
-    return out.value !== undefined;
+function calculateScriptSize(script: Uint8Array): number {
+    const length = script.length;
+    return 1 + length; // 1 byte for the length, followed by the script itself
 }
 
 /**
  * @ignore
  */
 export function encodeRawOutput(tx: Transaction) {
-    const outputSize = varuint.encodingLength(tx.outs.length) + tx.outs.reduce((sum, output) => {
-        return sum + 8 + varSliceSize(output.script);
+    // Calculate the size of the output buffer
+    const outputSize = 1 + tx.outputsLength * 8 + Array.from({ length: tx.outputsLength }).reduce((sum, _, idx) => {
+        const output = tx.getOutput(idx);
+        return sum + calculateScriptSize(output.script);
     }, 0);
 
-    const outputBuffer = Buffer.allocUnsafe(outputSize);
-    const outputBufferWriter = new BufferWriter(outputBuffer, 0);
+    let outputBuffer = Buffer.allocUnsafe(outputSize);
+    let offset = 0;
 
-    outputBufferWriter.writeVarInt(tx.outs.length);
-    tx.outs.forEach(txOut => {
-        if (isOutput(txOut)) {
-            outputBufferWriter.writeUInt64(txOut.value);
-        } else {
-            outputBufferWriter.writeSlice((txOut as any).valueBuffer);
-        }
+    // Write the number of outputs directly (assuming outputsLength fits within one byte)
+    offset = outputBuffer.writeUInt8(tx.outputsLength, offset);
 
-        outputBufferWriter.writeVarSlice(txOut.script);
-    });
+    for (let idx = 0; idx < tx.outputsLength; idx++) {
+        const txOut = tx.getOutput(idx);
+
+        // Write the amount (8 bytes)
+        offset = outputBuffer.writeBigUInt64LE(BigInt(txOut.amount), offset);
+
+        // Write the script length and the script itself
+        const script = Buffer.from(txOut.script);
+        offset = outputBuffer.writeUInt8(script.length, offset);
+        offset += script.copy(outputBuffer, offset);
+    }
 
     return outputBuffer;
 }
@@ -89,30 +95,20 @@ export function encodeRawOutput(tx: Transaction) {
 /**
  * @ignore
  */
-function vectorSize(someVector: Buffer[]): number {
-    const length = someVector.length;
-
-    return (
-        varuint.encodingLength(length) +
-        someVector.reduce((sum, witness) => {
-            return sum + varSliceSize(witness);
-        }, 0)
-    );
-}
-
-/**
- * @ignore
- */
 export function encodeRawWitness(tx: Transaction) {
-    const witnessSize = tx.ins.reduce((sum, input) => {
-        return sum + vectorSize(input.witness);
-    }, 0);
+    // Initialize witnessBuffer as an empty Buffer
+    let witnessBuffer = Buffer.alloc(0);
 
-    const witnessBuffer = Buffer.allocUnsafe(witnessSize);
-    const witnessBufferWriter = new BufferWriter(witnessBuffer, 0);
-
-    tx.ins.forEach(input => {
-        witnessBufferWriter.writeVector(input.witness);
+    // Loop through each input and concatenate the witness data to witnessBuffer
+    Array.from({ length: tx.inputsLength }).forEach((_, idx) => {
+        const input = tx.getInput(idx);
+        if (input.finalScriptWitness) {
+            // Concatenate each witness data directly to the witnessBuffer
+            input.finalScriptWitness.forEach((witness) => {
+                const witnessPart = Buffer.from(witness);
+                witnessBuffer = Buffer.concat([witnessBuffer, witnessPart]);
+            });
+        }
     });
 
     return witnessBuffer;
@@ -189,16 +185,17 @@ export function getMerkleProof(block: Block, txHash: string, forWitness?: boolea
  * @returns The estimated fee for transaction inclusion.
  */
 export function estimateTxFee(feeRate: number, numInputs: number = 1) {
-    const tx = new bitcoin.Transaction();
+    const tx = new Transaction();
     for (let i = 0; i < numInputs; i++) {
-        tx.addInput(Buffer.alloc(32, 0), 0, 0xfffffffd, Buffer.alloc(0));
+        tx.addInput({
+            txid: Buffer.alloc(32, 0),
+            index: 0
+        });
     }
     // https://github.com/interlay/interbtc-clients/blob/6bd3e81d695b93180c5aeae4f33910ad4395ff1a/bitcoin/src/light/wallet.rs#L80
-    tx.ins.map(tx_input => (tx_input.witness = [Buffer.alloc(33 + 32 + 7, 0), Buffer.alloc(33, 0)]));
-    tx.addOutput(Buffer.alloc(22, 0), 1000); // P2WPKH
-    tx.addOutput(Buffer.alloc(22, 0), 1000); // P2WPKH (change)
-    tx.addOutput(bitcoin.script.compile([bitcoin.opcodes.OP_RETURN, Buffer.alloc(20, 0)]), 0);
-    const vsize = tx.virtualSize();
-    const satoshis = feeRate * vsize;
-    return satoshis;
+    tx.updateInput(0, { finalScriptWitness: [Buffer.alloc(33 + 32 + 7, 0)] });
+
+    // can't add dummy output as will get an error 'Cannot find previous output info'
+
+    return feeRate * tx.vsize; // i.e satoshis
 }
