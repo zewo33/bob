@@ -473,7 +473,7 @@ export class EsploraClient {
             };
         }>(`${this.basePath}/address/${address}`);
 
-        const confirmedBalance = response.chain_stats.funded_txo_sum - response.chain_stats.spent_txo_sum;
+        const confirmedBalance = response.chain_stats.funded_txo_sum - response.mempool_stats.spent_txo_sum;
         const unconfirmedBalance = response.mempool_stats.funded_txo_sum - response.mempool_stats.spent_txo_sum;
 
         return {
