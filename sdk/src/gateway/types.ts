@@ -70,6 +70,10 @@ export interface Token {
     logoURI: string;
 }
 
+export interface EnrichedToken extends Token {
+    tvl: number;
+}
+
 /**
  * Designed to be compatible with the Swing SDK.
  * https://developers.swing.xyz/reference/sdk/get-a-quote

@@ -83,3 +83,48 @@ export const offRampCaller = [
         stateMutability: 'nonpayable',
     },
 ] as const;
+
+export const compoundV2CTokenAbi = [
+    {
+        inputs: [],
+        name: 'exchangeRateCurrent',
+        outputs: [
+            {
+                internalType: 'uint256',
+                name: '',
+                type: 'uint256',
+            },
+        ],
+        stateMutability: 'nonpayable',
+        type: 'function',
+    },
+    {
+        inputs: [],
+        name: 'underlying',
+        outputs: [
+            {
+                internalType: 'address',
+                name: '',
+                type: 'address',
+            },
+        ],
+        stateMutability: 'view',
+        type: 'function',
+    },
+] as const;
+
+export const aaveV2AtokenAbi = [
+    {
+        inputs: [],
+        name: 'UNDERLYING_ASSET_ADDRESS',
+        outputs: [
+            {
+                internalType: 'address',
+                name: '',
+                type: 'address',
+            },
+        ],
+        stateMutability: 'view',
+        type: 'function',
+    },
+] as const;

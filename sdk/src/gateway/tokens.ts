@@ -1,7 +1,7 @@
 import { ChainId, Token } from './types';
 
 // TODO: re-write to use superchain tokenlist
-const bobTokens = [
+export const bobTokens = [
     {
         name: 'tBTC v2',
         symbol: 'tBTC',
@@ -12,17 +12,6 @@ const bobTokens = [
             },
         },
         logoURI: 'https://ethereum-optimism.github.io/data/tBTC/logo.svg',
-    },
-    {
-        name: 'Hybrid Bitcoin',
-        symbol: 'HybridBTC.pendle',
-        decimals: 8,
-        tokens: {
-            bob: {
-                address: '0x9998e05030Aee3Af9AD3df35A34F5C51e1628779',
-            },
-        },
-        logoURI: 'https://raw.githubusercontent.com/bob-collective/bob/master/assets/hybridBTC-pendle.svg',
     },
     {
         name: 'Wrapped BTC',
@@ -70,7 +59,7 @@ const bobTokens = [
     },
 ];
 
-const bobSepoliaTokens = [
+export const bobSepoliaTokens = [
     {
         name: 'Staked mtBTC',
         symbol: 'stmtBTC',
@@ -106,7 +95,7 @@ const bobSepoliaTokens = [
     },
 ];
 
-const shoebillTokens = [
+export const shoebillTokens = [
     {
         name: 'sb tBTC v2',
         symbol: 'sbtBTC',
@@ -133,7 +122,7 @@ const shoebillTokens = [
     },
 ];
 
-const segmentTokens = [
+export const segmentTokens = [
     {
         name: 'Segment TBTC',
         symbol: 'seTBTC',
@@ -184,7 +173,7 @@ const segmentTokens = [
     },
 ];
 
-const avalonTokens = [
+export const avalonTokens = [
     {
         name: 'Avalon TBTC',
         symbol: 'aBOBTBTC',
@@ -223,7 +212,7 @@ const avalonTokens = [
     },
 ];
 
-const ionicTokens = [
+export const ionicTokens = [
     {
         name: 'Ionic TBTC',
         symbol: 'iontBTC',
@@ -252,6 +241,20 @@ const ionicTokens = [
     },
 ];
 
+export const vedaTokens = [
+    {
+        name: 'Hybrid Bitcoin',
+        symbol: 'HybridBTC.pendle',
+        decimals: 8,
+        tokens: {
+            bob: {
+                address: '0x9998e05030Aee3Af9AD3df35A34F5C51e1628779',
+            },
+        },
+        logoURI: 'https://raw.githubusercontent.com/bob-collective/bob/master/assets/hybridBTC-pendle.svg',
+    },
+];
+
 const TOKENS: Array<{
     name: string;
     symbol: string;
@@ -266,7 +269,15 @@ const TOKENS: Array<{
         };
     };
     logoURI: string;
-}> = [...bobTokens, ...bobSepoliaTokens, ...shoebillTokens, ...segmentTokens, ...avalonTokens, ...ionicTokens];
+}> = [
+    ...bobTokens,
+    ...bobSepoliaTokens,
+    ...shoebillTokens,
+    ...segmentTokens,
+    ...avalonTokens,
+    ...ionicTokens,
+    ...vedaTokens,
+];
 
 /** @description Tokens supported on BOB and BOB Sepolia */
 export const SYMBOL_LOOKUP: { [key in number]: { [key in string]: Token } } = {};
