@@ -31,6 +31,7 @@ import { isAddress, Address, isAddressEqual } from 'viem';
 import * as bitcoin from 'bitcoinjs-lib';
 import { bob, bobSepolia } from 'viem/chains';
 import Strategy from './strategy';
+import { bigIntToFloatingNumber } from '../utils';
 
 type Optional<T, K extends keyof T> = Omit<T, K> & Partial<T>;
 
@@ -604,8 +605,8 @@ export class GatewayApiClient {
                 return {
                     ...token,
                     tvl:
-                        (Number(amount) * (prices.get(underlyingAddress.toLowerCase()) ?? 0)) /
-                        10 ** underlyingToken.decimals,
+                        bigIntToFloatingNumber(amount, underlyingToken.decimals) *
+                        (prices.get(underlyingAddress.toLowerCase()) ?? 0),
                 };
             })
         );
