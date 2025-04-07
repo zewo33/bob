@@ -140,8 +140,8 @@ export default class Strategy {
     }
 
     private async getVedaStrategyAssetState(token: Token): Promise<StrategyAssetState> {
-        // NOTE: remove 2 hours so we are sure to pick up at least one historical data point
-        const timestamp = Math.floor(Date.now() / 1000) - 2 * 3600;
+        // NOTE: remove 1 day so we are sure to pick up at least one historical data point
+        const timestamp = Math.floor(Date.now() / 1000) - 24 * 3600;
 
         const res = await fetch(`https://api.sevenseas.capital/hourlyData/bob/${token.address}/${timestamp}/latest`);
 
@@ -152,9 +152,16 @@ export default class Strategy {
             };
         }
 
-        const {
-            Response: [{ tvl }],
-        } = await res.json();
+        const body = await res.json();
+
+        if (!body.Response?.[0]) {
+            return {
+                address: 'usd',
+                amount: 0n,
+            };
+        }
+
+        const { tvl } = body.Response[0];
 
         return {
             address: 'usd',

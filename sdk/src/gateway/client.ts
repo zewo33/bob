@@ -580,7 +580,7 @@ export class GatewayApiClient {
     async getEnrichedTokens(includeStrategies: boolean = true): Promise<EnrichedToken[]> {
         const [tokens, prices] = await Promise.all([this.getTokenAddresses(includeStrategies), this.getPrices()]);
 
-        return await Promise.all(
+        return Promise.all(
             tokens.map(async (address) => {
                 const token = ADDRESS_LOOKUP[this.chainId][address];
 
